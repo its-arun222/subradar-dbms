@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SubRadar — DBMS Expense & Subscription Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #f0f4f8;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
+        }
+        body.soft-dark {
+            --bg-main: #1e2433;
+            --bg-card: #283044;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #39445e;
+            --input-bg: #1e2433;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .soothing-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+        }
+        .soothing-card:hover {
+            box-shadow: 0 10px 25px -4px rgba(79, 70, 229, 0.08);
+        }
+        .soothing-input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .muted-text { color: var(--text-muted); }
+    </style>
+</head>
+<body class="min-h-screen pb-14">
+
+    <!-- ==================== 1. LOGIN SCREEN ==================== -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-indigo-50 via-slate-100 to-teal-50">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200/80 p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-xl text-white shadow-md shadow-indigo-500/30">
+                    S
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl text-slate-800">SubRadar DBMS</h1>
+                    <p class="text-xs text-slate-500">Relational Expense & Subscription Portal</p>
+                </div>
+            </div>
+
+            <div class="mb-6 p-3.5 rounded-xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-indigo-900">MAIT DBMS Viva Mode</p>
+                    <p class="text-[11px] text-indigo-600">Authenticates against <code class="font-mono">users</code> table</p>
+                </div>
+                <button type="button" onclick="fillDemoCredentials()" class="text-xs bg-white text-indigo-600 font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition">
+                    Auto-Fill Arun
+                </button>
+            </div>
+
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Student / User Name</label>
+                    <input type="text" id="loginUsername" value="Arun" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Registered Email (UNIQUE Key)</label>
+                    <input type="email" id="loginEmail" value="arun@mait.ac.in" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Access PIN / Password</label>
+                    <input type="password" id="loginPassword" value="123456" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition">
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm shadow-lg shadow-indigo-600/25 transition transform active:scale-[0.99]">
+                    Sign In to Dashboard →
+                </button>
+            </form>
+
+            <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <span>● MySQL 3NF Schema Active</span>
+                <span>Port 3000</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. MAIN DASHBOARD ==================== -->
+    <div id="appDashboard" class="hidden">
+        <!-- Top Navbar -->
+        <nav class="soothing-card sticky top-0 z-30 border-b">
+            <div class="max-w-7xl mx-auto px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-lg text-white shadow-md shadow-indigo-500/20">
+                        S
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base tracking-tight">SubRadar Analytics</h1>
+                        <p class="text-xs muted-text">MySQL 3NF Relational Expense Engine</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Welcome, <span id="navUsername">Arun</span>
+                    </span>
+
+                    <button onclick="toggleTheme()" id="themeBtn" class="px-3 py-1.5 rounded-xl text-xs font-semibold soothing-input hover:opacity-80 transition">
+                        🌙 Soft Dim Mode
+                    </button>
+
+                    <button onclick="logout()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-6 mt-7 space-y-7">
+            
+            <!-- 4 KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="soothing-card rounded-2xl p-5">
+                    <div class="flex justify-between items-start">
+                        <p class="text-xs uppercase tracking-wider muted-text font-semibold">Total Monthly Burn</p>
+                        <span class="text-xs px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 font-semibold">SQL SUM()</span>
+                    </div>
+                    <h2 id="monthlyBurn" class="text-3xl font-bold mt-2">₹0</h2>
+                    <p id="dailyBurnText" class="text-xs muted-text mt-2">≈ ₹0 per day</p>
+                </div>
+
+                <div class="soothing-card rounded-2xl p-5">
+                    <div class="flex justify-between items-start">
+                        <p class="text-xs uppercase tracking-wider muted-text font-semibold">Annual Projection</p>
+                        <span class="text-xs px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 font-semibold">12 Months</span>
+                    </div>
+                    <h2 id="yearlyProjection" class="text-3xl font-bold text-indigo-600 mt-2">₹0</h2>
+                    <p class="text-xs muted-text mt-2">Normalized yearly forecast</p>
+                </div>
+
+                <div class="soothing-card rounded-2xl p-5">
+                    <div class="flex justify-between items-start">
+                        <p class="text-xs uppercase tracking-wider muted-text font-semibold">Active Subscriptions</p>
+                        <span class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 font-semibold">COUNT()</span>
+                    </div>
+                    <div class="flex items-baseline gap-3 mt-2">
+                        <h2 id="activeCount" class="text-3xl font-bold text-emerald-600">0</h2>
+                        <span id="pausedCount" class="text-xs muted-text font-medium">0 paused</span>
+                    </div>
+                    <p class="text-xs muted-text mt-2">Live status from MySQL</p>
+                </div>
+
+                <div class="soothing-card rounded-2xl p-5">
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs uppercase tracking-wider muted-text font-semibold">Budget Utilization</p>
+                        <span id="budgetPercent" class="text-xs font-bold text-indigo-600">0%</span>
+                    </div>
+                    <h2 id="budgetRatio" class="text-2xl font-bold mt-2">₹0 / ₹4,500</h2>
+                    <div class="w-full bg-slate-200/70 h-2.5 rounded-full mt-3 overflow-hidden">
+                        <div id="budgetBar" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHARTS & INTERACTIVE CALCULATOR ROW -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Chart 1: Category Doughnut Chart (4 cols) -->
+                <div class="lg:col-span-4 soothing-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold">Category Expense Share</h3>
+                        <p class="text-xs muted-text mb-4">Visualized from <code class="text-indigo-500">GROUP BY</code> query</p>
+                    </div>
+                    <div class="relative h-56 flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Service Cost Bar Chart (4 cols) -->
+                <div class="lg:col-span-4 soothing-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold">Cost Comparison (Monthly)</h3>
+                        <p class="text-xs muted-text mb-4">Active services ranked by spend</p>
+                    </div>
+                    <div class="relative h-56 flex items-center justify-center">
+                        <canvas id="serviceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Interactive Expense & Flatmate Split Calculator (4 cols) -->
+                <div class="lg:col-span-4 soothing-card rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-base font-bold">Smart Expense Calculator</h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold">Interactive</span>
+                    </div>
+                    <p class="text-xs muted-text mb-4">Split costs with flatmates or adjust your budget</p>
+
+                    <div class="space-y-3.5">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Plan Cost (₹/mo)</label>
+                                <input type="number" id="calcAmount" value="1500" oninput="runCalculator()"
+                                    class="w-full soothing-input rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Split Between</label>
+                                <select id="calcSplit" onchange="runCalculator()"
+                                    class="w-full soothing-input rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:border-indigo-500">
+                                    <option value="1">Just Me (1)</option>
+                                    <option value="2">2 People</option>
+                                    <option value="3">3 Flatmates</option>
+                                    <option value="4" selected>4 Flatmates</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/15 grid grid-cols-3 gap-2 text-center">
+                            <div>
+                                <p class="text-[11px] muted-text">Your Share</p>
+                                <p id="calcShare" class="text-base font-bold text-indigo-600 mt-0.5">₹375/mo</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] muted-text">Daily Cost</p>
+                                <p id="calcDaily" class="text-base font-bold mt-0.5">₹12.5</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] muted-text">Yearly Saved</p>
+                                <p id="calcSaved" class="text-base font-bold text-emerald-600 mt-0.5">₹13,500</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-200/50">
+                            <label class="block text-xs font-semibold muted-text mb-1.5">Update MySQL Monthly Budget Cap (₹)</label>
+                            <div class="flex gap-2">
+                                <input type="number" id="newBudgetInput" placeholder="4500"
+                                    class="w-full soothing-input rounded-xl px-3 py-1.5 text-sm font-semibold focus:outline-none focus:border-indigo-500">
+                                <button onclick="updateBudget()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition shrink-0">
+                                    Save SQL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN TABLE & ADD SUBSCRIPTION FORM -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-7">
+                
+                <!-- Left Column: Subscriptions Table (8 cols) -->
+                <div class="lg:col-span-8 soothing-card rounded-2xl p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                        <div>
+                            <h3 class="text-lg font-bold">Your Subscriptions</h3>
+                            <p class="text-xs muted-text">Live <code class="text-indigo-500">INNER JOIN</code> across <code class="text-indigo-500">subscriptions</code> & <code class="text-indigo-500">categories</code></p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search service..."
+                                class="soothing-input rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-indigo-500 w-36">
+                            <button onclick="setFilter('All')" id="btn-All" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white">All</button>
+                            <button onclick="setFilter('Active')" id="btn-Active" class="px-3 py-1.5 rounded-xl text-xs font-semibold soothing-input">Active</button>
+                            <button onclick="setFilter('Paused')" id="btn-Paused" class="px-3 py-1.5 rounded-xl text-xs font-semibold soothing-input">Paused</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-200/70 text-xs uppercase muted-text">
+                                    <th class="pb-3 font-semibold">Service</th>
+                                    <th class="pb-3 font-semibold">Category</th>
+                                    <th class="pb-3 font-semibold">Cost</th>
+                                    <th class="pb-3 font-semibold">Next Renewal</th>
+                                    <th class="pb-3 font-semibold">Status</th>
+                                    <th class="pb-3 font-semibold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subsTableBody" class="divide-y divide-slate-200/50 text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Column: Add New Subscription Form (4 cols) -->
+                <div class="lg:col-span-4 soothing-card rounded-2xl p-6 h-fit">
+                    <h3 class="text-base font-bold mb-1">Add New Subscription</h3>
+                    <p class="text-xs muted-text mb-4">Executes relational <code class="text-indigo-500">INSERT INTO</code> query</p>
+                    
+                    <form id="addSubForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold muted-text mb-1">Service Name</label>
+                            <input type="text" id="service_name" required placeholder="e.g., Spotify Duo, AWS" 
+                                class="w-full soothing-input rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Cost (₹)</label>
+                                <input type="number" step="0.01" id="cost" required placeholder="499" 
+                                    class="w-full soothing-input rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Billing Cycle</label>
+                                <select id="billing_cycle" class="w-full soothing-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Yearly">Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Category</label>
+                                <select id="category_id" required class="w-full soothing-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold muted-text mb-1">Renewal Date</label>
+                                <input type="date" id="next_renewal_date" required 
+                                    class="w-full soothing-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-sm transition shadow-md shadow-indigo-600/20">
+                            + Add Subscription to MySQL
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allSubscriptions = [];
+        let currentFilter = 'All';
+        let categoryChartInstance = null;
+        let serviceChartInstance = null;
+
+        // --- 1. LOGIN & SESSION LOGIC ---
+        function fillDemoCredentials() {
+            document.getElementById('loginUsername').value = 'Arun';
+            document.getElementById('loginEmail').value = 'arun@mait.ac.in';
+            document.getElementById('loginPassword').value = '123456';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const email = document.getElementById('loginEmail').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email })
+                });
+                const data = await res.json();
+                sessionStorage.setItem('subradar_user', JSON.stringify(data.user || { username }));
+            } catch (err) {
+                sessionStorage.setItem('subradar_user', JSON.stringify({ username }));
+            }
+            showDashboard(username);
+        });
+
+        function showDashboard(username) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appDashboard').classList.remove('hidden');
+            document.getElementById('navUsername').innerText = username || 'Arun';
+            loadCategories();
+            loadDashboard();
+            runCalculator();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('subradar_user');
+            document.getElementById('appDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        // Check if already logged in this tab
+        const savedUser = sessionStorage.getItem('subradar_user');
+        if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            showDashboard(parsed.username);
+        }
+
+        // --- 2. EYE-SOOTHING THEME TOGGLE ---
+        function toggleTheme() {
+            document.body.classList.toggle('soft-dark');
+            const isDark = document.body.classList.contains('soft-dark');
+            document.getElementById('themeBtn').innerText = isDark ? '☀️ Daylight Mode' : '🌙 Soft Dim Mode';
+            loadDashboard();
+        }
+
+        // --- 3. INTERACTIVE EXPENSE & SPLIT CALCULATOR ---
+        function runCalculator() {
+            const cost = parseFloat(document.getElementById('calcAmount').value) || 0;
+            const split = parseInt(document.getElementById('calcSplit').value) || 1;
+            const yourShare = cost / split;
+            const daily = yourShare / 30;
+            const yearlySaved = (cost - yourShare) * 12;
+
+            document.getElementById('calcShare').innerText = `₹${yourShare.toFixed(0)}/mo`;
+            document.getElementById('calcDaily').innerText = `₹${daily.toFixed(1)}`;
+            document.getElementById('calcSaved').innerText = `₹${yearlySaved.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+        }
+
+        async function updateBudget() {
+            const val = parseFloat(document.getElementById('newBudgetInput').value);
+            if (!val || val <= 0) return;
+            await fetch('/api/budget', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ monthly_budget: val })
+            });
+            loadDashboard();
+        }
+
+        // --- 4. LOAD CATEGORIES & DASHBOARD DATA ---
+        async function loadCategories() {
+            const res = await fetch('/api/categories');
+            const categories = await res.json();
+            const select = document.getElementById('category_id');
+            select.innerHTML = categories.map(c => `<option value="${c.category_id}">${c.category_name}</option>`).join('');
+            
+            const nextMonth = new Date();
+            nextMonth.setDate(nextMonth.getDate() + 30);
+            document.getElementById('next_renewal_date').value = nextMonth.toISOString().split('T')[0];
+        }
+
+        async function loadDashboard() {
+            const res = await fetch('/api/dashboard');
+            const data = await res.json();
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            allSubscriptions = data.subscriptions;
+            const monthlyBurn = parseFloat(data.stats.monthly_burn || 0);
+            const budget = parseFloat(data.user.monthly_budget || 4500);
+            const pct = Math.min(Math.round((monthlyBurn / budget) * 100), 100);
+
+            document.getElementById('navUsername').innerText = data.user.username || 'Arun';
+            document.getElementById('newBudgetInput').value = budget.toFixed(0);
+            document.getElementById('monthlyBurn').innerText = `₹${monthlyBurn.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+            document.getElementById('dailyBurnText').innerText = `≈ ₹${(monthlyBurn / 30).toFixed(1)} per day`;
+            document.getElementById('yearlyProjection').innerText = `₹${(monthlyBurn * 12).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+            document.getElementById('activeCount').innerText = data.stats.active_count;
+            document.getElementById('pausedCount').innerText = `${data.stats.paused_count} paused`;
+            document.getElementById('budgetRatio').innerText = `₹${monthlyBurn.toFixed(0)} / ₹${budget.toFixed(0)}`;
+            document.getElementById('budgetPercent').innerText = `${pct}%`;
+            document.getElementById('budgetBar').style.width = `${pct}%`;
+
+            renderTable();
+            renderCharts(data.categoryBreakdown, data.subscriptions);
+        }
+
+        // --- 5. RENDER CHARTS (CHART.JS) ---
+        function renderCharts(categories, subscriptions) {
+            const isDark = document.body.classList.contains('soft-dark');
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+
+            // 1. Category Doughnut Chart
+            const activeCats = categories.filter(c => parseFloat(c.category_monthly_spend) > 0);
+            const catCtx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+
+            categoryChartInstance = new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: activeCats.map(c => c.category_name),
+                    datasets: [{
+                        data: activeCats.map(c => parseFloat(c.category_monthly_spend).toFixed(0)),
+                        backgroundColor: activeCats.map(c => c.color_code),
+                        borderWidth: 2,
+                        borderColor: isDark ? '#283044' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor, boxWidth: 10, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // 2. Service Bar Chart
+            const activeSubs = subscriptions.filter(s => s.status === 'Active');
+            const srvCtx = document.getElementById('serviceChart').getContext('2d');
+            if (serviceChartInstance) serviceChartInstance.destroy();
+
+            serviceChartInstance = new Chart(srvCtx, {
+                type: 'bar',
+                data: {
+                    labels: activeSubs.map(s => s.service_name),
+                    datasets: [{
+                        label: 'Monthly Cost (₹)',
+                        data: activeSubs.map(s => s.billing_cycle === 'Monthly' ? s.cost : (s.cost / 12).toFixed(0)),
+                        backgroundColor: activeSubs.map(s => s.color_code),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
+                        y: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: isDark ? '#334155' : '#f1f5f9' } }
+                    }
+                }
+            });
+        }
+
+        // --- 6. TABLE & CRUD ACTIONS ---
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['All', 'Active', 'Paused'].forEach(f => {
+                const btn = document.getElementById(`btn-${f}`);
+                btn.className = f === filter 
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-semibold soothing-input';
+            });
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('subsTableBody');
+            const search = (document.getElementById('searchInput').value || '').toLowerCase();
+
+            const filtered = allSubscriptions.filter(s => {
+                const matchesStatus = currentFilter === 'All' || s.status === currentFilter;
+                const matchesSearch = s.service_name.toLowerCase().includes(search) || s.category_name.toLowerCase().includes(search);
+                return matchesStatus && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center muted-text">No matching subscriptions found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(sub => {
+                const isDueSoon = sub.days_left >= 0 && sub.days_left <= 7 && sub.status === 'Active';
+                const nextStatus = sub.status === 'Active' ? 'Paused' : 'Active';
+
+                return `
+                <tr class="hover:bg-indigo-500/5 transition">
+                    <td class="py-3.5 font-semibold">${sub.service_name}</td>
+                    <td class="py-3.5">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-semibold" 
+                              style="background-color: ${sub.color_code}18; color: ${sub.color_code};">
+                            ${sub.category_name}
+                        </span>
+                    </td>
+                    <td class="py-3.5 font-bold">
+                        ₹${parseFloat(sub.cost).toLocaleString('en-IN')}
+                        <span class="text-xs font-normal muted-text">/${sub.billing_cycle === 'Monthly' ? 'mo' : 'yr'}</span>
+                    </td>
+                    <td class="py-3.5">
+                        <div class="text-xs font-medium">${sub.next_renewal_date}</div>
+                        ${isDueSoon ? `<span class="text-[11px] text-amber-600 font-semibold">● Due in ${sub.days_left}d</span>` : ''}
+                    </td>
+                    <td class="py-3.5">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            sub.status === 'Active' 
+                                ? 'bg-emerald-500/15 text-emerald-600' 
+                                : 'bg-slate-400/20 muted-text'
+                        }">
+                            ${sub.status}
+                        </span>
+                    </td>
+                    <td class="py-3.5 text-right space-x-1.5">
+                        <button onclick="toggleStatus(${sub.sub_id}, '${nextStatus}')" 
+                                class="text-xs px-2.5 py-1 rounded-lg soothing-input hover:opacity-80 font-medium transition">
+                            ${sub.status === 'Active' ? 'Pause' : 'Resume'}
+                        </button>
+                        <button onclick="deleteSub(${sub.sub_id})" 
+                                class="text-xs px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-600 font-medium transition">
+                            Delete
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        document.getElementById('addSubForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                service_name: document.getElementById('service_name').value,
+                cost: document.getElementById('cost').value,
+                billing_cycle: document.getElementById('billing_cycle').value,
+                category_id: document.getElementById('category_id').value,
+                next_renewal_date: document.getElementById('next_renewal_date').value
+            };
+
+            await fetch('/api/subscriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('service_name').value = '';
+            document.getElementById('cost').value = '';
+            loadDashboard();
+        });
+
+        async function toggleStatus(id, status) {
+            await fetch(`/api/subscriptions/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            loadDashboard();
+        }
+
+        async function deleteSub(id) {
+            await fetch(`/api/subscriptions/${id}`, { method: 'DELETE' });
+            loadDashboard();
+        }
+    </script>
+</body>
+</html>
